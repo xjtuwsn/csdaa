@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ch">
+<head>
+    <meta charset="UTF-8">
+    <title>毕业设计</title>
+    <link rel="stylesheet" href="layui-v2.6.5/layui/css/layui.css">
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/iconfont.js"></script>
+    <script src="layui-v2.6.5/layui/layui.js"></script>
+</head>
+<script>
+
+     $.ajax({
+         url:"/web/islogin",
+         method:'get',
+         success:function (res){
+             if(res===false) window.location.href="login.html";
+             checkFin();
+             setInterval("checkFin()",30000);
+         }
+     })
+</script>
+<style>
+    .layui-table-cell{height: 42px;line-height: 42px}
+    .hide{display: none}
+    .active{display: block!important;}
+    .icon {
+        width: 1.6em;
+        height: 1.6em;
+        vertical-align: -0.15em;
+        fill: currentColor;
+        overflow: hidden;
+    }
+</style>
+<body style="margin: 0 !important;padding: 0!important; width: 100%;height: 100vh;background-color: #e2e2e2">
+<div id="outer" style="width: 84vw;margin-left: 8vw;height: 100%;background-color: white">
+    <div id="header" style="width: 100%;height: 12%;background-color: #01AAED">
+        <div style="color: white;font-weight: bold;padding-top: 2.5vh;font-size: 40px;margin-left: 40px">云存储去重和公共审计</div>
+        <div style="color:white;margin-left: 50px;margin-top: 5px">Blockchain-Based Secure Deduplication And Public Audit</div>
+    </div>
+    <div id="body" style="height: 88%;width: 100%">
+        <div style="width: 100%;height: 6%" id="backdiv" class="hide">
+
+            <button type="button" class="layui-btn layui-btn-primary" id="back" style="margin-top: 10px;margin-left: 20px;margin-bottom: 20px">
+                <i class="layui-icon layui-icon-return"></i>
+            </button>
+        </div>
+        <div class="layui-row" style="width: 100%;height: 6%;" id="updiv">
+            <div class="layui-col-md1">
+                <button class="layui-btn" style="margin-top: 10px;margin-left: 15px;background-color: #4169E1" id="batchaudit">
+                    批量审计 <i class="layui-icon layui-icon-survey"></i>
+                </button>
+            </div>
+            <div class="layui-col-md-offset9 layui-col-md1">
+                <button class="layui-btn" style="margin-right: 20px;margin-top: 10px" id="upload">
+                    文件上传<i class="layui-icon layui-icon-upload-drag"></i>
+                </button>
+            </div>
+            <div class="layui-col-md1">
+            <button class="layui-btn" style="margin-right: 40px;margin-top: 10px;background-color: #7171C6" id="query">
+                Fabric查询<i class="layui-icon layui-icon-search"></i>
+            </button>
+            </div>
+        </div>
+        <div id="table" class="active" style="height: 94%">
+            <table id="demo" lay-filter="test" ></table>
+        </div>
+        <div id="logs" class="hide" style="background-color:#e2e2e2 ;font-size: 18px;width: 100%;overflow: auto;">
+
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/html" id="fileBar">
+    <a class="layui-btn layui-btn-radius " lay-event="download" style="width: 5vw;height: 80%;line-height: 32px;">
+        下载 </a>
+    <a class="layui-btn layui-btn-radius layui-btn-danger " lay-event="delete" style="width: 5vw;height: 80%;line-height: 32px;">
+        删除</a>
+
+    <a class="layui-btn layui-btn-radius layui-btn-normal " lay-event="audit" style="width: 5vw;height: 80%;line-height: 32px;">
+        文件审计 </a>
+    <a class="layui-btn layui-btn-radius " lay-event="logs" style="width: 5vw;height: 80%;line-height: 32px;background-color: #74787c">
+        审计记录<i class="layui-icon layui-icon-right "></i></a>
+</script>
+<script>
+
+    $("#back").click(function (){
+        $("#backdiv").addClass("hide");
+        $("#updiv").removeClass("hide")
+        $("#table").removeClass("hide")
+        $("#table").addClass("active")
+        $("#logs").removeClass("active")
+        $("#logs").addClass("hide")
+        $("#logs").html("")
+    })
+    $("#batchaudit").click(function (){
+        let batch_t=[];
+        let batch_upid=[];
+        layui.use(['table','layer'], function() {
+            let table = layui.table;
+            let layer=layui.layer;
+            let checkStatus = table.checkStatus('ta1')
+            if(checkStatus.data.length>0){
+                for (let i = 0; i < checkStatus.data.length; i++) {
+                    batch_t.push(checkStatus.data[i].t);
+                    batch_upid.push(checkStatus.data[i].upid);
+                }
+                if(checkStatus.data.length>0){
+                    layer.load();
+                    $.ajax({
+                        url:'/audit/batchaudit',
+                        method:'post',
+                        traditional: true,
+                        data:{
+                            batchT:batch_t,
+                            batchUpid:batch_upid,
+                        },
+                        success:function (res){
+                            layer.closeAll('loading');
+                            layer.open({
+                                content:"审计请求已提交，稍后查看审计记录",
+                                title:"审计已提交",
+                                area:'700px',
+                                icon:1
+                            })
+                            console.log(res)
+                        }
+                    })
+                }
+            }
+            else {
+                layer.open({
+                    title:'没有选择',
+                    content:"请选择文件",
+                    icon:2
+                })
+            }
+            console.log(batch_t ) //表格是否全选
+            console.log(batch_upid)
+        })
+    })
+    $("#query").click(function (){
+        layui.use('layer',function (){
+            let layer=layui.layer;
+            layer.prompt({
+                title: '请输入ID',
+                area: '2000px'
+            },function(value, index, elem){
+                layer.load();
+                $.ajax({
+                    url:'/web/query',
+                    method:'post',
+                    data:{
+                        id:value
+                    },
+                    success:function (res){
+                        layer.closeAll('loading');
+                        layer.close(index);
+                        let s = JSON.stringify(res);
+                        let strings = Object.keys(res);
+                        console.log(s);
+                        let ss="aaaaaa\naaaaaaaaa"
+                        for(let i=0;i<strings.length;i++){
+                            let key=strings[i];
+
+                        }
+                        layer.open({
+                            title:'查询成功',
+                            content:s,
+                            area:'700px',
+                            icon:1
+                        })
+
+                    }
+                })
+
+            });
+        })
+    })
+    layui.use(['upload','layer'],function (){
+        let upload=layui.upload;
+        let layer=layui.layer;
+        upload.render({
+            elem: '#upload'
+            ,url: '/upload'
+            ,accept:'file'
+            ,auto: true //选择文件后不自动上传
+            ,before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
+                layer.load(); //上传loading
+            }
+            ,done: function(res, index, upload){
+                console.log(res)
+                if(res.code===0){
+                    layer.open({
+                        title:'上传成功',
+                        content:res.msg+'\n'+"总分块数:"+res.totalNum+"  实际上传数:"+res.recordNum,
+                        icon:1
+                    })
+                }
+                if(res.code===1){
+                    layer.open({
+                        title:'上传成功',
+                        content:res.msg,
+                        icon:1
+                    })
+                }
+                if(res.code===2){
+                    layer.open({
+                        title:'上传失败',
+                        content:res.msg,
+                        icon:2
+                    })
+                }
+                init();
+                layer.closeAll('loading'); //关闭loading
+            }
+            ,error: function(index, upload){
+                layer.closeAll('loading'); //关闭loading
+            }
+            //,bindAction: '#testListAction' //指向一个按钮触发上传
+            // ,choose: function(obj){
+            //     //将每次选择的文件追加到文件队列
+            //     let files = obj.pushFile();
+            //
+            //     //预读本地文件，如果是多文件，则会遍历。(不支持ie8/9)
+            //     obj.preview(function(index, file, result){
+            //         console.log(index); //得到文件索引
+            //         console.log(file); //得到文件对象
+            //         console.log(result); //得到文件base64编码，比如图片
+            //
+            //         //obj.resetFile(index, file, '123.jpg'); //重命名文件名，layui 2.3.0 开始新增
+            //
+            //         //这里还可以做一些 append 文件列表 DOM 的操作
+            //
+            //         //obj.upload(index, file); //对上传失败的单个文件重新上传，一般在某个事件中使用
+            //         //delete files[index]; //删除列表中对应的文件，一般在某个事件中使用
+            //     });
+            // }
+        });
+    })
+init();
+
+function init(){
+    layui.use(['table','layer'], function(){
+        let table = layui.table;
+        let layer=layui.layer;
+        $.ajax({
+            url:"/web/allFiles",
+            method:'get',
+            success:function (res){
+                for(let i in res) {
+                    let name=res[i].filename;
+                    let strings = name.split(".");
+                    let length = strings.length;
+                    if(strings[length-1]==='pdf')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                        "  <use xlink:href=\"#icon-pdf\"></use></svg>"+name;
+                    else if(strings[length-1]==='doc'||strings[length-1]==='docx')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-WORD\"></use></svg>"+name;
+                    else if(strings[length-1]==='exe')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-exe2\"></use></svg>"+name;
+                    else if(strings[length-1]==='rar'||strings[length-1]==='zip'||strings[length-1]==='gz')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-rar\"></use></svg>"+name;
+                    else if(strings[length-1]==='xls')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-excel-\"></use></svg>"+name;
+                    else if(strings[length-1]==='jpg'||strings[length-1]==='png'||strings[length-1]==='jpeg')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-jpg\"></use></svg>"+name;
+                    else if(strings[length-1]==='mp3'||strings[length-1]==='m4a')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-MP\"></use></svg>"+name;
+                    else if(strings[length-1]==='mp4'||strings[length-1]==='avi')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-mp\"></use></svg>"+name;
+                    else if(strings[length-1]==='md')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-MD\"></use></svg>"+name;
+                    else if(strings[length-1]==='txt')
+                        res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-txt\"></use></svg>"+name;
+                    else res[i].filename="<svg style='margin-right: 5px;' class=\"icon\" aria-hidden=\"true\">\n" +
+                            "  <use xlink:href=\"#icon-file-text\"></use></svg>"+name;
+                    console.log(res[i]);
+                }
+                let option={
+                    elem: '#demo'
+                    ,id:'ta1'
+                    ,height: 'full-200'
+                    ,page: true //开启分页
+                    ,cols: [[ //表头
+                        {field: 'check',type:'checkbox',width: '3%',fixed: 'left'}
+                        ,{field: 'filename', title: '文件名', width:'32%'}
+                        ,{field: 'uptime', title: '上传时间', width:'15%', sort: true}
+                        ,{title: '操作',fixed: 'right', width:'50%', align:'center', toolbar: '#fileBar'}
+                    ]]
+                }
+                option.data=res;
+                table.render(option);
+
+                table.on('tool(test)',function (obj){
+                    let event=obj.event;
+                    let data=obj.data;
+                    console.log(event);
+                    console.log(data);
+                    if(event==="download"){
+                        layer.load();
+                        $.ajax({
+                            url:'/download',
+                            method:'post',
+                            data:{
+                                t:data.t,
+                                filename:data.filename.split("</svg>")[1],
+                                sk:data.sk
+                            },
+                            success:function (res){
+                                layer.closeAll('loading');
+                                if(res.code===3){
+                                    layer.open({
+                                        title:'下载成功',
+                                        content:"文件已存储至:"+res.msg,
+                                        icon:1
+                                    })
+                                }
+
+                            }
+                        })
+                    }
+                    if(event==="delete"){
+                        layer.confirm('确定要删除云端数据吗？同时会删除本地记录', {
+                            btn: ['确定', '取消'] //可以无限个按钮
+                        }, function(index, layero){
+                            layer.load();
+                            $.ajax({
+                                url:'/delete',
+                                method:'post',
+                                data:{
+                                    t:data.t,
+                                    localName:data.localName,
+                                    upid:data.upid
+                                },
+                                success:function (res){
+                                    layer.closeAll('loading');
+                                    if(res.code===4){
+                                        layer.open({
+                                            title:'删除成功',
+                                            content:"文件"+data.filename.split("</svg>")[1]+"已从云端删除",
+                                            icon:1
+                                        })
+                                        init();
+                                    }
+                                    if(res.code===5){
+                                        layer.open({
+                                            title:'删除失败',
+                                            content:"没有权限",
+                                            icon:2
+                                        })
+                                    }
+                                }
+                            })
+                        }, function(index){
+                            //按钮【按钮二】的回调
+                        });
+                    }
+                    if(event==="audit"){
+                        layer.load();
+                        $.ajax({
+                            url:'/audit/doaudit',
+                            method:'post',
+                            data:{
+                                t:data.t,
+                                upid:data.upid
+                            },
+                            success:function (res){
+                                layer.closeAll('loading');
+                                if(res.code===6){
+                                    layer.open({
+                                        content:"审计请求已提交，稍后查看审计记录",
+                                        title:"审计已提交",
+                                        area:'700px',
+                                        icon:1
+                                    })
+                                }
+                                if(res.code===70){
+                                    layer.open({
+                                        content:"针对该文件的审计正在进行中，请勿重复提交",
+                                        title:"审计已存在",
+                                        area:'700px',
+                                        icon:2
+                                    })
+                                }
+                            }
+                        })
+
+                    }
+                    if(event==="logs"){
+                        layer.load();
+                        $("#table").removeClass("active")
+                        $("#table").addClass("hide")
+                        $("#logs").removeClass("hide")
+                        $("#logs").addClass("active")
+                        $("#updiv").addClass("hide")
+                        $("#backdiv").removeClass("hide")
+                        $.ajax({
+                            url:'/audit/getlogs',
+                            method:'post',
+                            data:{
+                                t:data.t
+                            },
+                            success:function (res){
+                                layer.closeAll('loading');
+                                $("#logs").append("<div style='background-color: white;display: flex;padding: 20px;margin-bottom: 15px'><span style='font-weight: bold;word-break: keep-all;line-height: 20px'>文件标识t：</span><span style='word-break: break-all;display: flex;line-height: 20px'>"+data.t+"</span></div>")
+                                for(let i in res){
+                                    $("#logs").append(
+                                        "<div class='layui-panel' style='background-color: white;margin-bottom: 15px;padding: 20px'><div style='font-size: 22px'><b>时间：</b>"+res[i].date+"</div>" +
+                                        "<div style='margin-top: 17px;'><span style='color: #009ad6;font-weight: bold'>id：</span><span>"+res[i].id+"</span></div>"+
+                                        "<div style='margin-top: 7px'><b style='color: #009ad6'>auditor：</b>"+res[i].auditor+"  <b style='color: #009ad6;margin-left: 50px'>auditee：</b>"+res[i].auditee+"</div>"+
+                                        "<div style='margin-top: 7px'><b style='color: #009ad6'>z：</b>"+res[i].z+"</div>"+
+                                        "<div style='margin-top: 7px;display: flex' ><span style='color: #009ad6;font-weight: bold;line-height: 20px'>r1：</span><span style='word-break: break-all;display: flex;line-height: 20px'>"+res[i].r1+"</span></div>"+
+                                        "<div style='margin-top: 7px;display: flex' ><span style='color: #009ad6;font-weight: bold;line-height: 20px'>r2：</span><span style='word-break: break-all;display: flex;line-height: 20px'>"+res[i].r2+"</span></div>"+
+                                        "<div style='margin-top: 7px;display: flex' ><span style='color: #009ad6;font-weight: bold;line-height: 20px'>proof：</span><span style='word-break: break-all;display: flex;line-height: 20px'>"+res[i].proof+"</span></div>"+
+                                        "<div style='margin-top: 7px;display: flex' ><span style='color: #009ad6;font-weight: bold;line-height: 20px'>sgima：</span><span style='word-break: break-all;display: flex;line-height: 20px'>"+res[i].sigma+"</span></div>"+
+                                        "<div style='margin-top: 7px'><b style='color: #009ad6'>result：</b>"+res[i].result+"</div></div>")
+                                }
+
+                                console.log(res);
+                            }
+                        })
+                    }
+                })
+            }
+        })
+
+
+    });
+}
+function checkFin(){
+    $.ajax({
+        url:'/audit/isfin',
+        method:'post',
+        success:function (res){
+            if(res.code===2){
+                layer.open({
+                    title:'审计完成',
+                    content:"有新的审计请求完成",
+                    icon:1
+                })
+            }
+        }
+    })
+}
+</script>
+</html>

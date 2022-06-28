@@ -1,0 +1,62 @@
+test:
+  name: basic-contract-benchmark
+  description: test benchmark
+  workers:
+    type: local
+    number: 2
+  rounds:
+    - label: readFileAsset
+      description: Read file asset benchmark
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 2
+      workload:
+        module: workload/readFileAsset.js
+        arguments:
+          assets: 10
+          contractId: basic
+    - label: readAuditAsset
+      description: Read audit asset benchmark
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 2
+      workload:
+        module: workload/readAuditAsset.js
+        arguments:
+          assets: 10
+          contractId: basic
+    - label: createFileAsset
+      description: Create file asset benchmark
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 2
+      workload:
+        module: workload/createFileAsset.js
+        arguments:
+          assets: 10
+          contractId: basic
+    - label: createAuditAsset
+      description: Create audit asset benchmark
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 2
+      workload:
+        module: workload/createAuditAsset.js
+        arguments:
+          assets: 10
+          contractId: basic
+monitors:
+  resource:
+    - module: docker
+      options:
+        interval: 5
+        containers:
+          - all
