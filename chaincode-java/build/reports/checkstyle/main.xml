@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.21">
+<file name="E:\edgedown\chaincode-java\src\main\java\org\hyperledger\fabric\samples\assettransfer\AssetTransfer.java">
+</file>
+<file name="E:\edgedown\chaincode-java\src\main\java\org\hyperledger\fabric\samples\assettransfer\AuditAssert.java">
+</file>
+<file name="E:\edgedown\chaincode-java\src\main\java\org\hyperledger\fabric\samples\assettransfer\FileIndex.java">
+</file>
+<file name="E:\edgedown\chaincode-java\src\main\java\org\hyperledger\fabric\samples\assettransfer\SystemParamter.java">
+</file>
+</checkstyle>
