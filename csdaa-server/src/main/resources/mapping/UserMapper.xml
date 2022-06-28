@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.csdaa.wsn.server.mapper.UserMapper">
+    <select id="getUserID" resultType="java.lang.Integer">
+        select id from user where username=#{username} and password=#{password};
+    </select>
+    <select id="getUserFlag" resultType="java.lang.String">
+        select flag from user where id=#{id};
+    </select>
+    <select id="getIdByUsername" resultType="java.lang.Integer">
+        select id from user where username=#{username};
+    </select>
+    <insert id="addUser">
+        insert into user values (null,#{flag},#{username},#{password});
+    </insert>
+</mapper>

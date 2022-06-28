@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.csdaa.wsn.server.mapper.DepMapper">
+    <select id="isTExist" resultType="java.lang.Integer">
+        select count(*) from file_details where tag=#{tag};
+    </select>
+<!--    <insert id="storeBlockDetail" parameterType="com.csdaa.wsn.commons.entity.FileBlock">-->
+<!--        <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER">-->
+<!--            select last_insert_id()-->
+<!--        </selectKey>-->
+<!--        insert into block_details values (null,#{tag},#{ck},#{kesi});-->
+<!--    </insert>-->
+    <select id="isFileExist" resultType="java.lang.Integer">
+        select count(*) from file_details where fileid=(select files.id from files where flag=#{t});
+    </select>
+    <insert id="insertFile">
+        insert into files values (default,#{name},#{flag},default);
+    </insert>
+    <select id="getKesi" resultType="java.lang.String">
+        select sigima from file_details,files
+        where fileid=files.id and flag=#{flag} and file_details.`index`=#{index};
+    </select>
+    <select id="getTag" resultType="java.lang.String">
+        select tag from file_details,files
+            where fileid=files.id and flag=#{flag} and file_details.`index`=#{index};
+    </select>
+    <insert id="addOwner">
+        insert into owners set userid=(select user.id from user
+                                                       where user.flag=#{user}),
+                                               fileid=(select files.id from files
+                                                       where files.flag=#{t});
+    </insert>
+    <insert id="stroeFileDetail">
+        insert into file_details set fileid=(select files.id from files where flag=#{flag})
+        ,`index`=#{block},tag=#{tag},ck=#{ck},sigima=#{sigima};
+    </insert>
+    <select id="isOwner" resultType="java.lang.Integer">
+        select id from owners where userid=(select user.id from user where flag=#{user})
+                                    and fileid=(select files.id from files where flag=#{t});
+    </select>
+    <select id="getTagCk" resultType="com.csdaa.wsn.commons.entity.TagAndCK">
+        select tag,ck from file_details,files
+        where flag=#{t} and files.id=file_details.fileid and `index`=#{block};
+    </select>
+    <delete id="deleteOwner">
+        delete from owners where fileid=(select id from files where flag=#{t}) and userid=(select id from user where flag=#{user});
+    </delete>
+    <delete id="deleteFile">
+        delete from files where flag=#{t};
+    </delete>
+    <select id="hasOwner" resultType="java.lang.Integer">
+        select count(*) from owners where fileid=(select id from files where flag=#{t});
+    </select>
+    <select id="getFileId" resultType="java.lang.Integer">
+        select id from files where flag=#{t};
+    </select>
+    <select id="getNoUseTag" resultType="java.lang.Integer">
+        select id from file_details where fileid=#{fileID} and tag not in(select tag from file_details where fileid!=#{fileID});
+    </select>
+    <delete id="deleteFileDetail">
+        delete from file_details where fileid=#{fileID};
+    </delete>
+<!--    <delete id="deleteBlock">-->
+<!--        delete from block_details where id=#{bid};-->
+<!--    </delete>-->
+    <select id="getTagById" resultType="java.lang.String">
+        select tag from file_details where id=#{bid};
+    </select>
+<!--    <insert id="creatOrder" parameterType="com.wuyan.masteryi.mall.entity.Order">-->
+<!--        <selectKey resultType="java.lang.Integer" keyProperty="orderId" order="AFTER">-->
+<!--            select last_insert_id()-->
+<!--        </selectKey>-->
+<!--        insert into `order` values (null,#{UserId},#{orderTotalPrice},default,default,#{orderNo},#{orderAddr})-->
+<!--    </insert>-->
+<!--    <insert id="addUser">-->
+<!--        insert into user values (null,#{userName},#{userPwd},#{userImgUrl},#{address},#{phoneNum},default,default)-->
+<!--    </insert>-->
+
+<!--    <delete id="deleteUser">-->
+<!--        delete from user where user_id = #{userId}-->
+<!--    </delete>-->
+
+<!--    <update id="changeUser" parameterType="User">-->
+<!--        update user set user_name = #{user.userName, jdbcType=VARCHAR}, user_pwd = #{user.userPwd, jdbcType=VARCHAR},-->
+<!--                        user_img_url = #{user.userImgUrl, jdbcType=VARCHAR}, address = #{user.address, jdbcType=VARCHAR}, phone_num=#{user.phoneNum, jdbcType=VARCHAR}-->
+<!--        where user_id = #{user.userId}-->
+<!--    </update>-->
+
+<!--    <update id="changImgUrl">-->
+<!--        update user set user_img_url=#{url} where user_id=#{u_id}-->
+<!--    </update>-->
+
+<!--    <select id="getUserByNP" resultType="User">-->
+<!--        select * from user where user_name=#{username} and user_pwd=#{password}-->
+<!--    </select>-->
+
+<!--    <select id="getPassword" resultType="String">-->
+<!--        select user_pwd from user where user_name=#{username}-->
+<!--    </select>-->
+
+<!--    <select id="getUserId" resultType="String">-->
+<!--        select user_id from user where user_name=#{userName}-->
+<!--    </select>-->
+
+
+</mapper>
